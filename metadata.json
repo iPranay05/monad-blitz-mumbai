@@ -1,0 +1,6 @@
+{
+  "name": "GigBoss-AI",
+  "description": "Autonomous corporate operations agent that hires humans for real-world tasks, reviews proof of work with Gemini, and triggers payments from the treasury.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
