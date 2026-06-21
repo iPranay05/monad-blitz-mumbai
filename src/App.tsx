@@ -234,12 +234,19 @@ export default function App() {
   const fetchWalletBalance = async (address: string) => {
     if (!window.ethereum) return;
     try {
+      // Get latest block number first, then query balance at that exact block
+      // This bypasses MetaMask's RPC caching that can return stale "latest" results
+      const blockHex = await window.ethereum.request({
+        method: "eth_blockNumber",
+        params: []
+      });
       const balanceHex = await window.ethereum.request({
         method: "eth_getBalance",
-        params: [address, "latest"]
+        params: [address, blockHex]
       });
       const balanceWei = BigInt(balanceHex);
       const balanceEth = (Number(balanceWei) / 1e18).toFixed(4);
+      console.log("[GigBoss] Wallet balance refreshed:", balanceEth, "at block", blockHex);
       setWalletBalance(balanceEth);
     } catch (err) {
       console.error("Balance querying failed:", err);
@@ -379,6 +386,17 @@ export default function App() {
     const interval = setInterval(fetchInitialData, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  // Separate wallet balance polling with proper dependencies to avoid stale closure
+  useEffect(() => {
+    if (!walletConnected || !walletAddress) return;
+    // Fetch immediately on connect/reconnect
+    fetchWalletBalance(walletAddress);
+    const balanceInterval = setInterval(() => {
+      fetchWalletBalance(walletAddress);
+    }, 5000);
+    return () => clearInterval(balanceInterval);
+  }, [walletConnected, walletAddress]);
 
   const fetchInitialData = async () => {
     try {
